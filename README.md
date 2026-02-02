@@ -152,3 +152,8 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 - ReportLab for PDF generation
 - Python-Markdown for markdown processing
 - BeautifulSoup4 for HTML parsing 
+## Author
+
+Built by [Amar Harolikar](https://www.linkedin.com/in/amarharolikar/)
+
+Explore 30+ open source AI tools for analytics, databases & automation at [tigzig.com](https://tigzig.com)

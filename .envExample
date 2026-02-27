@@ -1,0 +1,15 @@
+# --- App Environment ---
+IS_LOCAL_DEVELOPMENT=1          # Set to 0 in production
+BASE_URL=https://your-domain.com  # Required in production (IS_LOCAL_DEVELOPMENT=0)
+
+# --- Rate Limiting & Concurrency ---
+RATE_LIMIT=30/minute             # Per-IP rate limit (SlowAPI format)
+GLOBAL_RATE_LIMIT=200/minute     # Global rate limit across all IPs
+MAX_CONCURRENT_PER_IP=3          # Max simultaneous requests per IP
+MAX_CONCURRENT_GLOBAL=6          # Max simultaneous requests globally
+
+# --- API Monitoring (optional) ---
+# tigzig-api-monitor sends request metadata to a centralized logging service.
+# If not set, the middleware degrades gracefully (no logging, no errors).
+API_MONITOR_URL=https://your-logger-service.com/log
+API_MONITOR_KEY=your-api-monitor-key

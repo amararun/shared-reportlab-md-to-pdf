@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to PDF Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: {
+                            950: '#1e1b4b',
+                            900: '#312e81',
+                            800: '#3730a3',
+                            700: '#4338ca',
+                            200: '#c7d2fe',
+                            100: '#e0e7ff',
+                            50: '#eef2ff',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .header-gradient {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        }
+        .file-drop-zone {
+            border: 2px dashed #c7d2fe;
+            transition: all 0.3s ease;
+        }
+        .file-drop-zone:hover {
+            border-color: #4338ca;
+            background-color: #eef2ff;
+        }
+        .markdown-input {
+            min-height: 200px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    <!-- Header -->
+    <header class="header-gradient text-white shadow-lg border-b border-white/5">
+        <div class="max-w-7xl mx-auto flex items-center gap-4 py-3 px-4">
+            <h1 class="text-xl font-semibold whitespace-nowrap tracking-tight">
+                Markdown to PDF
+            </h1>
+            <div class="h-5 w-px bg-indigo-300/20 mx-3"></div>
+            <span class="text-base text-indigo-100 font-medium whitespace-nowrap tracking-tight">
+                Convert • Preview • Download
+            </span>
+            <div class="h-5 w-px bg-indigo-300/20 mx-3"></div>
+            <div class="flex items-center gap-3">
+                <span class="text-[15px] font-medium whitespace-nowrap bg-indigo-800/80 px-4 py-1.5 rounded-md border border-indigo-700 shadow-sm">
+                    <span class="text-indigo-200 mr-2">Powered by:</span>
+                    <span class="text-white">ReportLab</span>
+                </span>
+                <img src="{{ url_for('static', path='reportlab-logo.png') }}" alt="ReportLab" class="h-7 w-auto rounded-lg">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto p-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <div class="flex gap-4">
+                    <button type="button" id="uploadTab" 
+                            class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600">
+                        <i class="fas fa-upload mr-2"></i>Upload File
+                    </button>
+                    <button type="button" id="pasteTab" 
+                            class="px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-indigo-600 hover:border-indigo-600">
+                        <i class="fas fa-paste mr-2"></i>Paste Text
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Upload Section -->
+            <div id="uploadSection">
+                <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
+                    <div class="file-drop-zone rounded-xl p-8 text-center cursor-pointer">
+                        <input type="file" id="markdownFile" accept=".md,.markdown" class="hidden" required>
+                        <label for="markdownFile" class="cursor-pointer">
+                            <i class="fas fa-upload text-3xl text-indigo-500 mb-3"></i>
+                            <div class="text-lg font-medium text-gray-700">Drop your Markdown file here</div>
+                            <div class="text-sm text-gray-500 mt-1">or click to browse</div>
+                        </label>
+                    </div>
+                    
+                    <!-- Selected File Info -->
+                    <div id="fileInfo" class="hidden">
+                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-file-alt text-indigo-500"></i>
+                            <span id="fileName"></span>
+                        </div>
+                    </div>
+
+                    <!-- Convert Button -->
+                    <div class="flex gap-3">
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                            Convert to PDF
+                        </button>
+                        <button id="downloadBtn" type="button" disabled 
+                            class="w-full sm:w-auto px-6 py-2.5 font-medium rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400
+                            enabled:bg-green-600 enabled:hover:bg-green-700 enabled:text-white">
+                            <i class="fas fa-download"></i>
+                            Download PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Text Input Section -->
+            <div id="pasteSection" class="hidden">
+                <form id="textForm" class="space-y-4">
+                    <div class="rounded-xl border border-gray-200 overflow-hidden">
+                        <textarea id="markdownText" 
+                                class="w-full markdown-input p-4 border-0 focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Paste or type your Markdown text here..."></textarea>
+                    </div>
+
+                    <!-- Convert Button for Text -->
+                    <div class="flex gap-3">
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                            Convert to PDF
+                        </button>
+                        <button id="downloadBtnText" type="button" disabled 
+                            class="w-full sm:w-auto px-6 py-2.5 font-medium rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400
+                            enabled:bg-green-600 enabled:hover:bg-green-700 enabled:text-white">
+                            <i class="fas fa-download"></i>
+                            Download PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Status Message -->
+            <div id="status" class="text-sm font-medium mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/50 border-t border-indigo-100 py-4 mt-8 text-sm text-indigo-950/70">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-indigo-950/70 text-center md:text-left">
+                    Amar Harolikar <span class="mx-1.5 text-indigo-300">•</span> 
+                    Specialist - Decision Sciences & Applied Generative AI
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <a href="https://www.linkedin.com/in/amarharolikar" target="_blank" rel="noopener noreferrer"
+                        class="text-indigo-600 hover:text-indigo-700 hover:underline">
+                        LinkedIn
+                    </a>
+                    <a href="https://rex.tigzig.com" target="_blank" rel="noopener noreferrer"
+                        class="text-indigo-600 hover:text-indigo-700 hover:underline">
+                        rex.tigzig.com
+                    </a>
+                    <a href="https://tigzig.com" target="_blank" rel="noopener noreferrer"
+                        class="text-indigo-600 hover:text-indigo-700 hover:underline">
+                        tigzig.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById('markdownFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const status = document.getElementById('status');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadBtnText = document.getElementById('downloadBtnText');
+        const uploadTab = document.getElementById('uploadTab');
+        const pasteTab = document.getElementById('pasteTab');
+        const uploadSection = document.getElementById('uploadSection');
+        const pasteSection = document.getElementById('pasteSection');
+        let convertedPdfBlob = null;
+
+        // Tab switching
+        uploadTab.addEventListener('click', () => {
+            uploadTab.classList.replace('text-gray-500', 'text-indigo-600');
+            uploadTab.classList.replace('border-transparent', 'border-indigo-600');
+            pasteTab.classList.replace('text-indigo-600', 'text-gray-500');
+            pasteTab.classList.replace('border-indigo-600', 'border-transparent');
+            uploadSection.classList.remove('hidden');
+            pasteSection.classList.add('hidden');
+            status.textContent = '';
+            downloadBtn.disabled = true;
+            downloadBtnText.disabled = true;
+        });
+
+        pasteTab.addEventListener('click', () => {
+            pasteTab.classList.replace('text-gray-500', 'text-indigo-600');
+            pasteTab.classList.replace('border-transparent', 'border-indigo-600');
+            uploadTab.classList.replace('text-indigo-600', 'text-gray-500');
+            uploadTab.classList.replace('border-indigo-600', 'border-transparent');
+            pasteSection.classList.remove('hidden');
+            uploadSection.classList.add('hidden');
+            status.textContent = '';
+            downloadBtn.disabled = true;
+            downloadBtnText.disabled = true;
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                fileInfo.classList.remove('hidden');
+                fileName.textContent = e.target.files[0].name;
+                downloadBtn.disabled = true;
+                convertedPdfBlob = null;
+                status.textContent = '';
+            } else {
+                fileInfo.classList.add('hidden');
+            }
+        });
+
+        function handleDownload(blob, filename) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (convertedPdfBlob) {
+                handleDownload(convertedPdfBlob, fileInput.files[0].name.replace('.md', '.pdf').replace('.markdown', '.pdf'));
+            }
+        });
+
+        downloadBtnText.addEventListener('click', () => {
+            if (convertedPdfBlob) {
+                handleDownload(convertedPdfBlob, 'document.pdf');
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                status.textContent = 'Please select a file';
+                status.className = 'text-sm font-medium text-red-600';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                status.textContent = 'Converting...';
+                status.className = 'text-sm font-medium text-indigo-600';
+                downloadBtn.disabled = true;
+                
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    convertedPdfBlob = await response.blob();
+                    status.textContent = 'Conversion successful! Click the download button to save your PDF.';
+                    status.className = 'text-sm font-medium text-green-600';
+                    downloadBtn.disabled = false;
+                } else {
+                    status.textContent = 'Error converting file';
+                    status.className = 'text-sm font-medium text-red-600';
+                    downloadBtn.disabled = true;
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                status.className = 'text-sm font-medium text-red-600';
+                downloadBtn.disabled = true;
+            }
+        });
+
+        document.getElementById('textForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const markdownText = document.getElementById('markdownText').value.trim();
+            if (!markdownText) {
+                status.textContent = 'Please enter some Markdown text';
+                status.className = 'text-sm font-medium text-red-600';
+                return;
+            }
+
+            try {
+                status.textContent = 'Converting...';
+                status.className = 'text-sm font-medium text-indigo-600';
+                downloadBtnText.disabled = true;
+                
+                const response = await fetch('/api/convert/text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: markdownText,
+                        filename: 'document.pdf'
+                    })
+                });
+
+                if (response.ok) {
+                    convertedPdfBlob = await response.blob();
+                    status.textContent = 'Conversion successful! Click the download button to save your PDF.';
+                    status.className = 'text-sm font-medium text-green-600';
+                    downloadBtnText.disabled = false;
+                } else {
+                    status.textContent = 'Error converting text';
+                    status.className = 'text-sm font-medium text-red-600';
+                    downloadBtnText.disabled = true;
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                status.className = 'text-sm font-medium text-red-600';
+                downloadBtnText.disabled = true;
+            }
+        });
+
+        // Add drag and drop functionality
+        const dropZone = document.querySelector('.file-drop-zone');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('bg-indigo-50');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('bg-indigo-50');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            
+            if (files.length) {
+                fileInfo.classList.remove('hidden');
+                fileName.textContent = files[0].name;
+            }
+        }
+    </script>
+
+    <!-- Statcounter Code -->
+    <script type="text/javascript">
+        var sc_project = 13047808;
+        var sc_invisible = 1;
+        var sc_security = "b480b311";
+    </script>
+    <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+    <noscript>
+        <div class="statcounter">
+            <a title="web stats" href="https://statcounter.com/" target="_blank">
+                <img class="statcounter" src="https://c.statcounter.com/13047808/0/b480b311/1/" alt="web stats" referrerPolicy="no-referrer-when-downgrade" />
+            </a>
+        </div>
+    </noscript>
+    <!-- End of Statcounter Code -->
+</body>
+</html> 

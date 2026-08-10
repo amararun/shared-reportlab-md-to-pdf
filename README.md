@@ -1,3 +1,5 @@
+⚠️ **This repo is archived and no longer maintained.** It stays up as reference code for the build guides. No updates, including security updates, so review before you use any of it anywhere serious. The live apps run on newer, hardened versions of this code.
+
 # Markdown to PDF Converter with AI Integration
 
 A production-hardened FastAPI service that converts markdown to PDF/HTML with special support for technical analysis reports. Primary use is converting AI-generated markdown (with embedded images and HTML tables) into professionally formatted PDF and HTML reports.
